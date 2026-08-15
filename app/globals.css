@@ -1,0 +1,160 @@
+:root {
+  /* -- Paleta: inspirada en la tarjeta de sellos de barrio -- */
+  --ink: #14213D;        /* fondo oscuro principal */
+  --ink-soft: #223159;   /* paneles sobre fondo oscuro */
+  --paper: #FFF8F0;      /* superficie clara cálida */
+  --card: #FFFFFF;       /* tarjetas sobre paper */
+  --stamp: #E85D3D;      /* acento de acción: "sellar" */
+  --stamp-dark: #C94A2C;
+  --gold: #D4A24C;       /* acento secundario: nivel/oro */
+  --slate: #5B6478;      /* texto secundario */
+  --line: #E7DFD3;       /* líneas divisorias sobre paper */
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+a { color: inherit; }
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--stamp);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.85rem 1.5rem;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background: var(--stamp);
+  color: var(--paper);
+  box-shadow: 0 6px 20px rgba(232, 93, 61, 0.35);
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(232, 93, 61, 0.45); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--paper);
+  border: 1px solid rgba(255, 248, 240, 0.35);
+}
+.btn-ghost:hover { border-color: var(--paper); }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1.1rem;
+}
+
+.field label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.field input,
+.field select {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+}
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--stamp);
+  box-shadow: 0 0 0 3px rgba(232, 93, 61, 0.15);
+}
+
+.field-hint { font-size: 0.78rem; color: var(--slate); }
+
+/* -- Elemento de firma: tarjeta de sellos -- */
+.stampcard {
+  background: var(--ink-soft);
+  border-radius: 20px;
+  padding: 1.5rem;
+  width: 280px;
+}
+
+.stampcard-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.stamp-dot {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(255, 248, 240, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: rgba(255, 248, 240, 0.4);
+}
+
+.stamp-dot.filled {
+  background: var(--gold);
+  border-style: solid;
+  border-color: var(--gold);
+  color: var(--ink);
+  animation: stampIn 0.4s ease backwards;
+}
+
+@keyframes stampIn {
+  from { transform: scale(0.4) rotate(-15deg); opacity: 0; }
+  to { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stamp-dot.filled { animation: none; }
+  .btn-primary:hover { transform: none; }
+}
+
+@media (max-width: 860px) {
+  .split { grid-template-columns: 1fr !important; }
+}
