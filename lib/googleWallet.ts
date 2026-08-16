@@ -3,8 +3,24 @@ import jwt from 'jsonwebtoken';
 
 const ISSUER_ID = process.env.GOOGLE_WALLET_ISSUER_ID!;
 const SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL!;
-// Las \n vienen escapadas en el .env, hay que convertirlas a saltos de línea reales
-const PRIVATE_KEY = (process.env.GOOGLE_WALLET_PRIVATE_KEY ?? '').replace(/\\n/g, '\n');
+
+// Acepta la clave privada en dos formatos:
+// 1. Normal, con \n escapadas como texto (uso local, en .env.local)
+// 2. Codificada en Base64 (recomendado para Vercel, evita que la
+//    interfaz web corrompa los saltos de línea al pegarla)
+function resolvePrivateKey(): string {
+  const raw = process.env.GOOGLE_WALLET_PRIVATE_KEY ?? '';
+
+  if (raw.includes('BEGIN PRIVATE KEY')) {
+    // Viene en formato normal, solo hay que convertir \n de texto a saltos reales
+    return raw.replace(/\\n/g, '\n');
+  }
+
+  // Si no tiene el encabezado PEM, asumimos que está en Base64
+  return Buffer.from(raw, 'base64').toString('utf8');
+}
+
+const PRIVATE_KEY = resolvePrivateKey();
 
 const WALLET_BASE_URL = 'https://walletobjects.googleapis.com/walletobjects/v1';
 
