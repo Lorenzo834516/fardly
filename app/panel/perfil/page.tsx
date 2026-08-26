@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 
 type BusinessRow = {
@@ -118,15 +119,24 @@ export default function PerfilNegocio() {
       return;
     }
 
-    // Dirección: actualiza la sucursal principal, o la crea si no existe
     if (branchId) {
-      await supabase.from('branches').update({ address }).eq('id', branchId);
+      const { error: branchError } = await supabase.from('branches').update({ address }).eq('id', branchId);
+      if (branchError) {
+        setSaving(false);
+        setMessage('Se guardó el perfil, pero no se pudo guardar la dirección: ' + branchError.message);
+        return;
+      }
     } else {
-      const { data: newBranch } = await supabase
+      const { data: newBranch, error: branchError } = await supabase
         .from('branches')
         .insert({ business_id: business.id, name: 'Sucursal principal', address, is_main: true })
         .select('id')
         .single();
+      if (branchError) {
+        setSaving(false);
+        setMessage('Se guardó el perfil, pero no se pudo guardar la dirección: ' + branchError.message);
+        return;
+      }
       if (newBranch) setBranchId(newBranch.id);
     }
 
@@ -152,125 +162,239 @@ export default function PerfilNegocio() {
 
   return (
     <main style={{ minHeight: '100vh', background: 'var(--paper)', padding: '3rem 1.5rem' }}>
-      <form onSubmit={handleSave} style={{ maxWidth: 520, margin: '0 auto' }}>
-        <span className="eyebrow">Panel de {business.name}</span>
-        <h1 style={{ fontSize: '2rem', margin: '0.5rem 0 2rem' }}>Perfil del negocio</h1>
+      <style>{`
+        .cta-pill {
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .cta-pill:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+        }
+        .cta-pill:active:not(:disabled) {
+          transform: translateY(0);
+        }
+        .cta-pill:disabled {
+          opacity: 0.7;
+          cursor: default;
+        }
+        .upload-label {
+          transition: opacity 0.15s ease;
+        }
+        .upload-label:hover {
+          opacity: 0.75;
+        }
+      `}</style>
 
-        {/* Logo */}
-        <div className="field">
-          <label>Logo</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            {business.logo_url && (
-              <img
-                src={business.logo_url}
-                alt="Logo"
-                style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' }}
+      <div style={{ maxWidth: 560, margin: '0 auto' }}>
+        <Link
+          href="/panel"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: 'var(--slate)', fontSize: '0.88rem', textDecoration: 'none', marginBottom: '1rem' }}
+        >
+          ← Volver al panel
+        </Link>
+
+        <span className="eyebrow">{business.name}</span>
+        <h1 style={{ fontSize: '2rem', margin: '0.4rem 0 2rem' }}>Perfil del negocio</h1>
+
+        <form onSubmit={handleSave}>
+          {/* Sección: identidad visual */}
+          <div
+            style={{
+              background: 'var(--card)',
+              borderRadius: 18,
+              padding: '1.75rem',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+              marginBottom: '1.25rem',
+            }}
+          >
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.05em', color: 'var(--stamp)', marginBottom: '1.1rem' }}>
+              IDENTIDAD VISUAL
+            </p>
+
+            <div className="field">
+              <label>Logo</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div
+                  style={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: '50%',
+                    background: business.logo_url ? 'transparent' : 'var(--paper)',
+                    border: `2px solid ${business.brand_color || 'var(--ink)'}`,
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  {business.logo_url ? (
+                    <img src={business.logo_url} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <span style={{ color: 'var(--slate)', fontSize: '0.7rem' }}>Sin logo</span>
+                  )}
+                </div>
+                <label
+                  className="upload-label"
+                  style={{
+                    cursor: 'pointer',
+                    background: 'var(--paper)',
+                    border: '1px solid var(--line)',
+                    borderRadius: 999,
+                    padding: '0.5rem 1.1rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  {uploadingLogo ? 'Subiendo...' : 'Cambiar logo'}
+                  <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={uploadingLogo} style={{ display: 'none' }} />
+                </label>
+              </div>
+            </div>
+
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label htmlFor="brandColor">Color de marca</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <input
+                  id="brandColor"
+                  type="color"
+                  value={business.brand_color ?? '#2b2420'}
+                  onChange={(e) => update('brand_color', e.target.value)}
+                  style={{ width: 48, height: 40, padding: 0, border: 'none', background: 'none', borderRadius: 8, cursor: 'pointer' }}
+                />
+                <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', fontSize: '0.9rem' }}>
+                  {business.brand_color ?? '#2b2420'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Sección: ubicación */}
+          <div
+            style={{
+              background: 'var(--card)',
+              borderRadius: 18,
+              padding: '1.75rem',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+              marginBottom: '1.25rem',
+            }}
+          >
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.05em', color: 'var(--stamp)', marginBottom: '1.1rem' }}>
+              UBICACIÓN
+            </p>
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label htmlFor="address">Dirección del local</label>
+              <input
+                id="address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Av. Central, Ciudad de Panamá"
               />
-            )}
-            <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={uploadingLogo} />
+            </div>
           </div>
-          {uploadingLogo && <span className="field-hint">Subiendo...</span>}
-        </div>
 
-        {/* Color de marca */}
-        <div className="field">
-          <label htmlFor="brandColor">Color de marca</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <input
-              id="brandColor"
-              type="color"
-              value={business.brand_color ?? '#2b2420'}
-              onChange={(e) => update('brand_color', e.target.value)}
-              style={{ width: 48, height: 40, padding: 0, border: 'none', background: 'none' }}
-            />
-            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>
-              {business.brand_color ?? '#2b2420'}
-            </span>
+          {/* Sección: redes sociales */}
+          <div
+            style={{
+              background: 'var(--card)',
+              borderRadius: 18,
+              padding: '1.75rem',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+              marginBottom: '1.75rem',
+            }}
+          >
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.05em', color: 'var(--stamp)', marginBottom: '1.1rem' }}>
+              CONTACTO Y REDES
+            </p>
+
+            <div className="field">
+              <label htmlFor="whatsapp">WhatsApp</label>
+              <input
+                id="whatsapp"
+                value={business.whatsapp_number ?? ''}
+                onChange={(e) => update('whatsapp_number', e.target.value)}
+                placeholder="+507 6000-0000"
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="instagram">Instagram (usuario, sin @)</label>
+              <input
+                id="instagram"
+                value={business.instagram_handle ?? ''}
+                onChange={(e) => update('instagram_handle', e.target.value)}
+                placeholder="minegocio"
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="facebook">Facebook (usuario o página)</label>
+              <input
+                id="facebook"
+                value={business.facebook_handle ?? ''}
+                onChange={(e) => update('facebook_handle', e.target.value)}
+                placeholder="minegocio"
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="tiktok">TikTok (usuario, sin @)</label>
+              <input
+                id="tiktok"
+                value={business.tiktok_handle ?? ''}
+                onChange={(e) => update('tiktok_handle', e.target.value)}
+                placeholder="minegocio"
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="twitter">Twitter / X (usuario, sin @)</label>
+              <input
+                id="twitter"
+                value={business.twitter_handle ?? ''}
+                onChange={(e) => update('twitter_handle', e.target.value)}
+                placeholder="minegocio"
+              />
+            </div>
+
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label htmlFor="website">Sitio web</label>
+              <input
+                id="website"
+                value={business.website_url ?? ''}
+                onChange={(e) => update('website_url', e.target.value)}
+                placeholder="https://minegocio.com"
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Dirección */}
-        <div className="field">
-          <label htmlFor="address">Dirección del local</label>
-          <input
-            id="address"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="Av. Central, Ciudad de Panamá"
-          />
-        </div>
+          {message && (
+            <p style={{ fontSize: '0.9rem', marginBottom: '1rem', color: message.startsWith('Error') ? 'var(--stamp-dark)' : 'var(--slate)' }}>
+              {message}
+            </p>
+          )}
 
-        {/* Redes sociales */}
-        <div className="field">
-          <label htmlFor="whatsapp">WhatsApp</label>
-          <input
-            id="whatsapp"
-            value={business.whatsapp_number ?? ''}
-            onChange={(e) => update('whatsapp_number', e.target.value)}
-            placeholder="+507 6000-0000"
-          />
-        </div>
-
-        <div className="field">
-          <label htmlFor="instagram">Instagram (usuario, sin @)</label>
-          <input
-            id="instagram"
-            value={business.instagram_handle ?? ''}
-            onChange={(e) => update('instagram_handle', e.target.value)}
-            placeholder="minegocio"
-          />
-        </div>
-
-        <div className="field">
-          <label htmlFor="facebook">Facebook (usuario o página)</label>
-          <input
-            id="facebook"
-            value={business.facebook_handle ?? ''}
-            onChange={(e) => update('facebook_handle', e.target.value)}
-            placeholder="minegocio"
-          />
-        </div>
-
-        <div className="field">
-          <label htmlFor="tiktok">TikTok (usuario, sin @)</label>
-          <input
-            id="tiktok"
-            value={business.tiktok_handle ?? ''}
-            onChange={(e) => update('tiktok_handle', e.target.value)}
-            placeholder="minegocio"
-          />
-        </div>
-
-        <div className="field">
-          <label htmlFor="twitter">Twitter / X (usuario, sin @)</label>
-          <input
-            id="twitter"
-            value={business.twitter_handle ?? ''}
-            onChange={(e) => update('twitter_handle', e.target.value)}
-            placeholder="minegocio"
-          />
-        </div>
-
-        <div className="field">
-          <label htmlFor="website">Sitio web</label>
-          <input
-            id="website"
-            value={business.website_url ?? ''}
-            onChange={(e) => update('website_url', e.target.value)}
-            placeholder="https://minegocio.com"
-          />
-        </div>
-
-        {message && (
-          <p style={{ fontSize: '0.9rem', marginBottom: '1rem', color: message.startsWith('Error') ? 'var(--stamp-dark)' : 'var(--slate)' }}>
-            {message}
-          </p>
-        )}
-
-        <button type="submit" className="btn btn-primary" disabled={saving} style={{ width: '100%', justifyContent: 'center' }}>
-          {saving ? 'Guardando...' : 'Guardar cambios'}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={saving}
+            className="cta-pill"
+            style={{
+              width: '100%',
+              justifyContent: 'center',
+              background: 'var(--ink)',
+              color: 'var(--paper)',
+              border: 'none',
+              borderRadius: 999,
+              padding: '0.9rem',
+              fontWeight: 700,
+              fontSize: '1rem',
+              cursor: 'pointer',
+            }}
+          >
+            {saving ? 'Guardando...' : 'Guardar cambios'}
+          </button>
+        </form>
+      </div>
     </main>
   );
 }

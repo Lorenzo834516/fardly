@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 
-const META_SELLOS = 10;
+const META_SELLOS = 8;
 
 type Product = {
   id: string;
@@ -19,17 +19,30 @@ type MenuCategory = {
   products: Product[];
 };
 
+type Coupon = {
+  id: string;
+  code: string;
+  type: 'percentage' | 'fixed' | 'free_item';
+  value: number | null;
+  description: string | null;
+  ends_at: string | null;
+};
+
 type BusinessInfo = {
   name: string;
   logoUrl: string | null;
   brandColor: string | null;
   whatsapp: string | null;
   instagram: string | null;
+  facebook: string | null;
+  tiktok: string | null;
+  twitter: string | null;
   website: string | null;
   address: string | null;
   phone: string | null;
   openingHours: Record<string, string> | null;
   menu?: MenuCategory[];
+  coupons?: Coupon[];
 };
 
 type CardInfo = {
@@ -47,7 +60,7 @@ export default function TarjetaCliente() {
   const [card, setCard] = useState<CardInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [form, setForm] = useState({ name: '', contact: '' });
+  const [form, setForm] = useState({ name: '', contact: '', birthdate: '' });
   const [registering, setRegistering] = useState(false);
   const [stamping, setStamping] = useState(false);
   const [message, setMessage] = useState('');
@@ -55,6 +68,9 @@ export default function TarjetaCliente() {
   const [justStamped, setJustStamped] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [redeemedCoupons, setRedeemedCoupons] = useState<Set<string>>(new Set());
+  const [redeemingCoupon, setRedeemingCoupon] = useState<string | null>(null);
+  const [couponMessage, setCouponMessage] = useState<Record<string, string>>({});
 
   const brand = business?.brandColor || '#2b2420';
 
@@ -70,6 +86,31 @@ export default function TarjetaCliente() {
     }
 
     window.location.href = data.link;
+  }
+
+  async function handleRedeemCoupon(couponId: string) {
+    setRedeemingCoupon(couponId);
+    const res = await fetch(`/api/negocio/${slug}/canjear-cupon`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ couponId }),
+    });
+    const data = await res.json();
+    setRedeemingCoupon(null);
+
+    if (!res.ok) {
+      setCouponMessage((m) => ({ ...m, [couponId]: data.error ?? 'No se pudo canjear' }));
+      return;
+    }
+
+    setRedeemedCoupons((s) => new Set(s).add(couponId));
+    setCouponMessage((m) => ({ ...m, [couponId]: '¡Cupón canjeado! Muestra esta pantalla en caja.' }));
+  }
+
+  function describeCoupon(c: Coupon) {
+    if (c.type === 'percentage') return `${c.value}% de descuento`;
+    if (c.type === 'fixed') return `$${c.value} de descuento`;
+    return 'Producto gratis';
   }
 
   async function loadAll() {
@@ -175,9 +216,57 @@ export default function TarjetaCliente() {
           font-size: 1.4rem;
           animation: floatUp 1.8s ease-out forwards;
         }
+        .cta-pill {
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .cta-pill:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+        }
+        .cta-pill:active:not(:disabled) {
+          transform: translateY(0);
+        }
+        .cta-pill:disabled {
+          opacity: 0.7;
+          cursor: default;
+        }
+        .social-icon {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #fff;
+          text-decoration: none;
+          transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+        }
+        .social-icon:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+          opacity: 0.92;
+        }
       `}</style>
 
       <div style={{ maxWidth: 460, margin: '0 auto' }}>
+        <button
+          onClick={() => window.history.back()}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            background: 'none',
+            border: 'none',
+            color: 'var(--slate)',
+            fontSize: '0.88rem',
+            cursor: 'pointer',
+            padding: 0,
+            marginBottom: '1rem',
+          }}
+        >
+          ← Atrás
+        </button>
+
         {/* Encabezado del negocio */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           {business.logoUrl && (
@@ -231,9 +320,21 @@ export default function TarjetaCliente() {
               />
             </div>
 
+            <div className="field">
+              <label htmlFor="birthdate">Fecha de cumpleaños (opcional)</label>
+              <input
+                id="birthdate"
+                type="date"
+                value={form.birthdate}
+                onChange={(e) => setForm((f) => ({ ...f, birthdate: e.target.value }))}
+              />
+              <span className="field-hint">Te mandamos algo especial ese día 🎉</span>
+            </div>
+
             <button
               type="submit"
               disabled={registering}
+              className="cta-pill"
               style={{
                 width: '100%',
                 justifyContent: 'center',
@@ -318,6 +419,7 @@ export default function TarjetaCliente() {
               <button
                 onClick={handleStamp}
                 disabled={stamping}
+                className="cta-pill"
                 style={{
                   marginTop: '1.25rem',
                   width: '100%',
@@ -337,6 +439,7 @@ export default function TarjetaCliente() {
               <button
                 onClick={handleAddToWallet}
                 disabled={walletLoading}
+                className="cta-pill"
                 style={{
                   marginTop: '0.6rem',
                   width: '100%',
@@ -381,6 +484,77 @@ export default function TarjetaCliente() {
               </div>
             )}
           </>
+        )}
+
+        {/* Cupones disponibles */}
+        {card?.registered && (business.coupons ?? []).length > 0 && (
+          <div className="fade-in-section" style={{ marginTop: '1.5rem' }}>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.05em', color: 'var(--stamp)', marginBottom: '0.75rem' }}>
+              CUPONES DISPONIBLES
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {(business.coupons ?? []).map((c) => {
+                const redeemed = redeemedCoupons.has(c.id);
+                return (
+                  <div
+                    key={c.id}
+                    style={{
+                      background: 'var(--card)',
+                      borderRadius: 14,
+                      padding: '1.1rem 1.25rem',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '1rem',
+                      opacity: redeemed ? 0.7 : 1,
+                    }}
+                  >
+                    <div>
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-mono)',
+                          fontWeight: 700,
+                          background: brand,
+                          color: '#fff',
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: 6,
+                          fontSize: '0.8rem',
+                        }}
+                      >
+                        {c.code}
+                      </span>
+                      <p style={{ margin: '0.5rem 0 0', fontWeight: 600 }}>{describeCoupon(c)}</p>
+                      {c.description && <p style={{ margin: '0.2rem 0 0', color: 'var(--slate)', fontSize: '0.85rem' }}>{c.description}</p>}
+                      {couponMessage[c.id] && (
+                        <p style={{ margin: '0.4rem 0 0', fontSize: '0.82rem', color: redeemed ? 'green' : 'var(--stamp-dark)' }}>
+                          {couponMessage[c.id]}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleRedeemCoupon(c.id)}
+                      disabled={redeemed || redeemingCoupon === c.id}
+                      className="cta-pill"
+                      style={{
+                        background: redeemed ? 'var(--paper)' : brand,
+                        color: redeemed ? 'var(--slate)' : '#fff',
+                        border: 'none',
+                        borderRadius: 999,
+                        padding: '0.6rem 1.2rem',
+                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        cursor: redeemed ? 'default' : 'pointer',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {redeemed ? 'Canjeado' : redeemingCoupon === c.id ? 'Canjeando...' : 'Canjear'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
 
         {/* Menú del negocio */}
@@ -482,15 +656,70 @@ export default function TarjetaCliente() {
                 .join(' · ')}
             </p>
           )}
-          <p style={{ marginTop: '0.4rem' }}>
-            {business.whatsapp && (
-              <a href={`https://wa.me/${business.whatsapp}`} style={{ marginRight: 12, color: brand }}>WhatsApp</a>
-            )}
-            {business.instagram && (
-              <a href={`https://instagram.com/${business.instagram}`} style={{ marginRight: 12, color: brand }}>Instagram</a>
-            )}
-            {business.website && <a href={business.website} style={{ color: brand }}>Sitio web</a>}
-          </p>
+          {(business.whatsapp || business.instagram || business.facebook || business.tiktok || business.twitter || business.website) && (
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.6rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
+              {business.whatsapp && (
+                <a
+                  href={`https://wa.me/${business.whatsapp}`}
+                  className="social-icon"
+                  aria-label="WhatsApp"
+                  style={{ background: brand }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.77.46 3.45 1.28 4.95L2 22l5.28-1.38a9.9 9.9 0 0 0 4.76 1.21h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.05c-.24.68-1.2 1.25-1.97 1.41-.53.11-1.22.2-3.54-.76-2.97-1.23-4.88-4.24-5.03-4.44-.15-.2-1.2-1.59-1.2-3.04 0-1.44.75-2.15 1.02-2.44.27-.29.58-.36.78-.36.2 0 .39.002.56.01.18.008.42-.068.65.5.24.58.82 2 .89 2.15.07.15.12.32.02.52-.1.2-.15.32-.3.49-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.75 1.24 1.62 2.01 1.11.99 2.05 1.3 2.34 1.44.29.15.46.13.63-.08.17-.2.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.66.78 1.94.92.29.15.48.22.55.34.07.13.07.71-.17 1.4z"/></svg>
+                </a>
+              )}
+              {business.instagram && (
+                <a
+                  href={`https://instagram.com/${business.instagram}`}
+                  className="social-icon"
+                  aria-label="Instagram"
+                  style={{ background: brand }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" /></svg>
+                </a>
+              )}
+              {business.facebook && (
+                <a
+                  href={`https://facebook.com/${business.facebook}`}
+                  className="social-icon"
+                  aria-label="Facebook"
+                  style={{ background: brand }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-7.5h2.5l.5-3h-3V8.5c0-.87.24-1.46 1.49-1.46H16.5V4.36C16.19 4.32 15.15 4.23 13.94 4.23c-2.53 0-4.26 1.54-4.26 4.37V10.5h-2.5v3h2.5V21h3.32z"/></svg>
+                </a>
+              )}
+              {business.tiktok && (
+                <a
+                  href={`https://tiktok.com/@${business.tiktok}`}
+                  className="social-icon"
+                  aria-label="TikTok"
+                  style={{ background: brand }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 2h-3v13.5a2.5 2.5 0 1 1-2.5-2.5c.17 0 .34.02.5.05V9.9a5.5 5.5 0 1 0 5 5.47V8.8a7.4 7.4 0 0 0 4.5 1.52V7.3a4.4 4.4 0 0 1-4.5-4.3V2z"/></svg>
+                </a>
+              )}
+              {business.twitter && (
+                <a
+                  href={`https://x.com/${business.twitter}`}
+                  className="social-icon"
+                  aria-label="Twitter / X"
+                  style={{ background: brand }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 2H22l-7.4 8.46L23.3 22h-6.8l-5.3-6.9L5 22H1.9l7.9-9.05L1 2h6.9l4.8 6.3L18.9 2zm-1.2 18h1.9L7.4 4H5.4l12.3 16z"/></svg>
+                </a>
+              )}
+              {business.website && (
+                <a
+                  href={business.website}
+                  className="social-icon"
+                  aria-label="Sitio web"
+                  style={{ background: brand }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </main>

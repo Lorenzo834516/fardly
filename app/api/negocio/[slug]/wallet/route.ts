@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { verifySessionToken, CUSTOMER_COOKIE } from '@/lib/customerSession';
 import { createSaveToWalletLink } from '@/lib/googleWallet';
 
-const META_SELLOS = 8;
+const META_SELLOS = 10;
 
 export async function GET(
   req: NextRequest,

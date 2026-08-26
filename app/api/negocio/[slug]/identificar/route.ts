@@ -6,7 +6,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { slug: string } }
 ) {
-  const { name, contact } = await req.json();
+  const { name, contact, birthdate } = await req.json();
   // contact puede ser un teléfono o un correo, lo distinguimos por el formato
   const isEmail = typeof contact === 'string' && contact.includes('@');
 
@@ -42,6 +42,7 @@ export async function POST(
         full_name: name,
         phone: isEmail ? null : contact,
         email: isEmail ? contact : null,
+        birthdate: birthdate || null,
         source: 'qr',
       })
       .select('id')

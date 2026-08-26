@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 
 type Category = { id: string; name: string; sort_order: number };
@@ -162,9 +163,51 @@ export default function PanelMenu() {
 
   return (
     <main style={{ minHeight: '100vh', background: 'var(--paper)', padding: '3rem 1.5rem' }}>
+      <style>{`
+        .cta-pill {
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .cta-pill:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+        }
+        .cta-pill:active:not(:disabled) {
+          transform: translateY(0);
+        }
+        .cta-pill:disabled {
+          opacity: 0.7;
+          cursor: default;
+        }
+        .category-card {
+          transition: box-shadow 0.18s ease;
+        }
+        .category-card:hover {
+          box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+        }
+        .text-action {
+          transition: opacity 0.15s ease;
+        }
+        .text-action:hover {
+          opacity: 0.7;
+        }
+        .upload-label {
+          transition: opacity 0.15s ease;
+        }
+        .upload-label:hover {
+          opacity: 0.75;
+        }
+      `}</style>
+
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
+        <Link
+          href="/panel"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: 'var(--slate)', fontSize: '0.88rem', textDecoration: 'none', marginBottom: '1rem' }}
+        >
+          ← Volver al panel
+        </Link>
+
         <span className="eyebrow">Panel</span>
-        <h1 style={{ fontSize: '2rem', margin: '0.5rem 0 2rem' }}>Menú del negocio</h1>
+        <h1 style={{ fontSize: '2rem', margin: '0.4rem 0 2rem' }}>Menú del negocio</h1>
 
         {message && (
           <p style={{ color: 'var(--stamp-dark)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>{message}</p>
@@ -181,13 +224,29 @@ export default function PanelMenu() {
             placeholder="Nueva categoría (ej: Bebidas)"
             style={{ flex: 1 }}
           />
-          <button type="submit" className="btn btn-primary" disabled={addingCategory}>
-            {addingCategory ? 'Creando...' : 'Agregar categoría'}
+          <button
+            type="submit"
+            disabled={addingCategory}
+            className="cta-pill"
+            style={{
+              background: 'var(--ink)',
+              color: 'var(--paper)',
+              border: 'none',
+              borderRadius: 999,
+              padding: '0 1.5rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {addingCategory ? 'Creando...' : 'Agregar'}
           </button>
         </form>
 
         {categories.length === 0 && (
-          <p style={{ color: 'var(--slate)' }}>Todavía no tienes categorías. Crea la primera arriba.</p>
+          <div style={{ background: 'var(--card)', borderRadius: 16, padding: '2rem', textAlign: 'center' }}>
+            <p style={{ color: 'var(--slate)', margin: 0 }}>Todavía no tienes categorías. Crea la primera arriba.</p>
+          </div>
         )}
 
         {categories.map((cat) => {
@@ -197,58 +256,57 @@ export default function PanelMenu() {
           return (
             <div
               key={cat.id}
+              className="category-card"
               style={{
                 background: 'var(--card)',
-                borderRadius: 16,
+                borderRadius: 18,
                 padding: '1.5rem',
-                marginBottom: '1.5rem',
+                marginBottom: '1.25rem',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2 style={{ fontSize: '1.2rem', margin: 0 }}>{cat.name}</h2>
+                <h2 style={{ fontSize: '1.15rem', margin: 0, color: 'var(--ink)' }}>{cat.name}</h2>
                 <button
                   onClick={() => handleDeleteCategory(cat.id)}
-                  className="btn btn-ghost"
-                  style={{ fontSize: '0.8rem' }}
+                  className="text-action"
+                  style={{ background: 'none', border: 'none', color: 'var(--stamp-dark)', fontSize: '0.8rem', cursor: 'pointer', padding: 0 }}
                 >
                   Borrar categoría
                 </button>
               </div>
 
-              {/* Productos existentes */}
               {catProducts.map((p) => (
                 <div
                   key={p.id}
                   style={{
                     display: 'flex',
                     gap: '0.75rem',
-                    padding: '0.75rem 0',
+                    padding: '0.85rem 0',
                     borderBottom: '1px solid var(--line)',
                     alignItems: 'center',
                   }}
                 >
-                  <div style={{ position: 'relative' }}>
-                    {p.image_url ? (
-                      <img
-                        src={p.image_url}
-                        alt={p.name}
-                        style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <div style={{ width: 48, height: 48, borderRadius: 8, background: 'var(--line)' }} />
-                    )}
-                  </div>
+                  {p.image_url ? (
+                    <img
+                      src={p.image_url}
+                      alt={p.name}
+                      style={{ width: 52, height: 52, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
+                    />
+                  ) : (
+                    <div style={{ width: 52, height: 52, borderRadius: 10, background: 'var(--paper)', flexShrink: 0 }} />
+                  )}
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
-                      <span style={{ fontWeight: 500, opacity: p.available ? 1 : 0.5 }}>{p.name}</span>
-                      {p.price != null && <span style={{ fontWeight: 600 }}>${p.price}</span>}
+                      <span style={{ fontWeight: 600, opacity: p.available ? 1 : 0.5 }}>{p.name}</span>
+                      {p.price != null && <span style={{ fontWeight: 700, color: 'var(--stamp)' }}>${p.price}</span>}
                     </div>
                     {p.description && (
                       <p style={{ color: 'var(--slate)', fontSize: '0.85rem', margin: '0.15rem 0 0' }}>{p.description}</p>
                     )}
-                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.4rem', fontSize: '0.8rem' }}>
-                      <label style={{ cursor: 'pointer', color: 'var(--stamp)' }}>
+                    <div style={{ display: 'flex', gap: '0.9rem', marginTop: '0.4rem', fontSize: '0.8rem' }}>
+                      <label className="text-action" style={{ cursor: 'pointer', color: 'var(--stamp)', fontWeight: 600 }}>
                         {uploadingProductImage === p.id ? 'Subiendo...' : 'Cambiar foto'}
                         <input
                           type="file"
@@ -260,13 +318,15 @@ export default function PanelMenu() {
                       </label>
                       <button
                         onClick={() => handleToggleAvailable(p)}
-                        style={{ background: 'none', border: 'none', color: 'var(--stamp)', cursor: 'pointer', padding: 0 }}
+                        className="text-action"
+                        style={{ background: 'none', border: 'none', color: 'var(--slate)', cursor: 'pointer', padding: 0, fontWeight: 600 }}
                       >
                         {p.available ? 'Ocultar' : 'Mostrar'}
                       </button>
                       <button
                         onClick={() => handleDeleteProduct(p.id)}
-                        style={{ background: 'none', border: 'none', color: 'var(--stamp-dark)', cursor: 'pointer', padding: 0 }}
+                        className="text-action"
+                        style={{ background: 'none', border: 'none', color: 'var(--stamp-dark)', cursor: 'pointer', padding: 0, fontWeight: 600 }}
                       >
                         Borrar
                       </button>
@@ -276,7 +336,17 @@ export default function PanelMenu() {
               ))}
 
               {/* Agregar producto nuevo */}
-              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div
+                style={{
+                  marginTop: '1.1rem',
+                  padding: '1rem',
+                  background: 'var(--paper)',
+                  borderRadius: 12,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem',
+                }}
+              >
                 <input
                   value={form.name}
                   onChange={(e) =>
@@ -302,9 +372,20 @@ export default function PanelMenu() {
                 />
                 <button
                   onClick={() => handleAddProduct(cat.id)}
-                  className="btn btn-primary"
                   disabled={savingProduct === cat.id}
-                  style={{ alignSelf: 'flex-start' }}
+                  className="cta-pill"
+                  style={{
+                    alignSelf: 'flex-start',
+                    background: 'var(--ink)',
+                    color: 'var(--paper)',
+                    border: 'none',
+                    borderRadius: 999,
+                    padding: '0.6rem 1.4rem',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    marginTop: '0.3rem',
+                  }}
                 >
                   {savingProduct === cat.id ? 'Agregando...' : `Agregar a ${cat.name}`}
                 </button>

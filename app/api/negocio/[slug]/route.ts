@@ -7,7 +7,7 @@ export async function GET(
 ) {
   const { data: business, error } = await supabaseAdmin
     .from('businesses')
-    .select('id, name, logo_url, brand_color, whatsapp_number, instagram_handle, website_url')
+    .select('id, name, logo_url, brand_color, whatsapp_number, instagram_handle, facebook_handle, tiktok_handle, twitter_handle, website_url')
     .eq('slug', params.slug)
     .eq('status', 'active')
     .single();
@@ -35,6 +35,13 @@ export async function GET(
     .eq('business_id', business.id)
     .eq('available', true);
 
+  const { data: coupons } = await supabaseAdmin
+    .from('coupons')
+    .select('id, code, type, value, description, ends_at')
+    .eq('business_id', business.id)
+    .eq('active', true)
+    .or('ends_at.is.null,ends_at.gt.' + new Date().toISOString());
+
   const menu = (categories ?? [])
     .map((cat) => ({
       id: cat.id,
@@ -50,10 +57,14 @@ export async function GET(
     brandColor: business.brand_color,
     whatsapp: business.whatsapp_number,
     instagram: business.instagram_handle,
+    facebook: business.facebook_handle,
+    tiktok: business.tiktok_handle,
+    twitter: business.twitter_handle,
     website: business.website_url,
     address: mainBranch?.address ?? null,
     phone: mainBranch?.phone ?? null,
     openingHours: mainBranch?.opening_hours ?? null,
     menu,
+    coupons: coupons ?? [],
   });
 }
