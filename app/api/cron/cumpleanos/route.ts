@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
-import { sendWhatsAppTemplate } from '@/lib/whatsapp';
+import { sendWhatsAppTemplate } from '@/lib/Whatsapp';
 
 // Nombre de la plantilla que debes crear y aprobar en Meta Business
 // Manager antes de que esto funcione de verdad. Mientras no exista,
