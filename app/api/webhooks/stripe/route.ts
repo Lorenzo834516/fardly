@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { stripe } from '@/lib/stripe';
+import { getStripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 // Stripe necesita el cuerpo "crudo" (sin parsear) para verificar la firma.
@@ -30,13 +30,6 @@ async function upsertSubscription(subscription: Stripe.Subscription, businessId?
     unpaid: 'past_due',
   };
 
-  // En la nueva API de Stripe, current_period_end se consulta a través de los items de la suscripción:
-  const firstItem = subscription.items.data[0];
-  const periodEndTimestamp = firstItem?.current_period_end ?? (subscription as any).current_period_end;
-  const currentPeriodEnd = periodEndTimestamp 
-    ? new Date(periodEndTimestamp * 1000).toISOString() 
-    : new Date().toISOString();
-
   await supabaseAdmin.from('subscriptions').upsert(
     {
       business_id: bizId,
@@ -44,22 +37,21 @@ async function upsertSubscription(subscription: Stripe.Subscription, businessId?
       status: statusMap[subscription.status] ?? subscription.status,
       stripe_customer_id: subscription.customer as string,
       stripe_subscription_id: subscription.id,
-      current_period_end: currentPeriodEnd,
+      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
     },
     { onConflict: 'business_id' }
   );
 
   // Reflejamos el estado también en businesses, para que sea fácil
   // de consultar desde el panel de admin sin hacer un join.
-  const isPlanActive = statusMap[subscription.status] === 'active' || statusMap[subscription.status] === 'trialing';
-
   await supabaseAdmin
     .from('businesses')
-    .update({ plan: isPlanActive ? 'activo' : 'inactivo' })
+    .update({ plan: statusMap[subscription.status] === 'active' || statusMap[subscription.status] === 'trialing' ? 'activo' : 'inactivo' })
     .eq('id', bizId);
 }
 
 export async function POST(req: NextRequest) {
+  const stripe = getStripe();
   const body = await req.text();
   const signature = req.headers.get('stripe-signature');
 
