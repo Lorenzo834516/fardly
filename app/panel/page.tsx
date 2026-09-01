@@ -90,6 +90,26 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
+  {
+    href: '/panel/campanas',
+    label: 'Clientes inactivos',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 6v6l4 2" />
+      </svg>
+    ),
+  },
+  {
+    href: '/panel/suscripcion',
+    label: 'Suscripción',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="2" y="5" width="20" height="14" rx="2" />
+        <line x1="2" y1="10" x2="22" y2="10" />
+      </svg>
+    ),
+  },
 ];
 
 export default function Panel() {
