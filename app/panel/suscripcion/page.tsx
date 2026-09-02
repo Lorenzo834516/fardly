@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
@@ -10,7 +10,7 @@ type Subscription = {
   current_period_end: string | null;
 };
 
-export default function PanelSuscripcion() {
+function SuscripcionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -206,5 +206,19 @@ export default function PanelSuscripcion() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function PanelSuscripcion() {
+  return (
+    <Suspense
+      fallback={
+        <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p style={{ color: 'var(--slate)' }}>Cargando suscripción...</p>
+        </main>
+      }
+    >
+      <SuscripcionContent />
+    </Suspense>
   );
 }
