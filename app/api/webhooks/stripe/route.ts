@@ -11,7 +11,7 @@ async function upsertSubscription(subscription: Stripe.Subscription, businessId?
 
   if (!bizId) {
     // Si no viene en metadata (ej: eventos posteriores al primero),
-    // lo buscamos por el stripe_customer_id ya guardado.
+    // lo buscamos por el stripe_subscription_id ya guardado.
     const { data: existing } = await supabaseAdmin
       .from('subscriptions')
       .select('business_id')
@@ -30,6 +30,13 @@ async function upsertSubscription(subscription: Stripe.Subscription, businessId?
     unpaid: 'past_due',
   };
 
+  // Leemos la fecha de fin de periodo asegurando compatibilidad de tipos
+  const subAny = subscription as any;
+  const periodEndTimestamp =
+    subAny.current_period_end ??
+    subscription.items?.data?.[0]?.current_period_end ??
+    Math.floor(Date.now() / 1000);
+
   await supabaseAdmin.from('subscriptions').upsert(
     {
       business_id: bizId,
@@ -37,7 +44,7 @@ async function upsertSubscription(subscription: Stripe.Subscription, businessId?
       status: statusMap[subscription.status] ?? subscription.status,
       stripe_customer_id: subscription.customer as string,
       stripe_subscription_id: subscription.id,
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+      current_period_end: new Date(periodEndTimestamp * 1000).toISOString(),
     },
     { onConflict: 'business_id' }
   );
@@ -46,7 +53,13 @@ async function upsertSubscription(subscription: Stripe.Subscription, businessId?
   // de consultar desde el panel de admin sin hacer un join.
   await supabaseAdmin
     .from('businesses')
-    .update({ plan: statusMap[subscription.status] === 'active' || statusMap[subscription.status] === 'trialing' ? 'activo' : 'inactivo' })
+    .update({
+      plan:
+        statusMap[subscription.status] === 'active' ||
+        statusMap[subscription.status] === 'trialing'
+          ? 'activo'
+          : 'inactivo',
+    })
     .eq('id', bizId);
 }
 
@@ -61,7 +74,11 @@ export async function POST(req: NextRequest) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!);
+    event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
   } catch (err) {
     return NextResponse.json({ error: 'Firma inválida' }, { status: 400 });
   }
@@ -70,7 +87,9 @@ export async function POST(req: NextRequest) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
       if (session.subscription) {
-        const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+        const subscription = await stripe.subscriptions.retrieve(
+          session.subscription as string
+        );
         await upsertSubscription(subscription, session.metadata?.business_id);
       }
       break;
