@@ -20,3 +20,4 @@ export function getStripe(): Stripe {
 // El Price ID del plan mensual que creaste en el dashboard de Stripe
 // (Product catalog → tu producto → Pricing). Empieza con "price_".
 export const MONTHLY_PLAN_PRICE_ID = process.env.STRIPE_MONTHLY_PRICE_ID!;
+
