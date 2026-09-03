@@ -1,31 +1,114 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
 
-export default function ReputacionPage() {
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+interface Resena {
+  id: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+}
+
+export default function ReputacionPage({ itemId = 'TU_ITEM_ID_AQUI' }: { itemId?: string }) {
   const [rating, setRating] = useState<number>(0);
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [comentario, setComentario] = useState('');
   const [enviado, setEnviado] = useState(false);
-  const [resenas, setResenas] = useState<{ estrellas: number; texto: string; fecha: string }[]>([]);
+  const [cargando, setCargando] = useState(false);
+  const [resenas, setResenas] = useState<Resena[]>([]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // 1. Cargar reseñas y suscribirse a eventos en tiempo real
+  useEffect(() => {
+    // Carga inicial
+    const cargarResenas = async () => {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('id, rating, comment, created_at')
+        .eq('item_id', itemId)
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        setResenas(data);
+      }
+    };
+
+    cargarResenas();
+
+    // Suscripción Realtime a la tabla reviews para el ítem actual
+    const channel = supabase
+      .channel(`realtime-reviews-${itemId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Recibe INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'reviews',
+          filter: `item_id=eq.${itemId}`,
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const nuevaResena = payload.new as Resena;
+            setResenas((prev) => [nuevaResena, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            const resenaActualizada = payload.new as Resena;
+            setResenas((prev) =>
+              prev.map((r) => (r.id === resenaActualizada.id ? resenaActualizada : r))
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setResenas((prev) => prev.filter((r) => r.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    // Limpieza de la suscripción al desmontar el componente
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [itemId]);
+
+  // 2. Guardar o actualizar reseña
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (rating === 0) return alert('Por favor selecciona una calificación con las estrellas.');
 
-    const nuevaResena = {
-      estrellas: rating,
-      texto: comentario,
-      fecha: 'Hace un momento',
-    };
+    setCargando(true);
 
-    setResenas([nuevaResena, ...resenas]);
-    setEnviado(true);
-    setTimeout(() => {
-      setEnviado(false);
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      setCargando(false);
+      return alert('Debes estar autenticado para enviar una valoración.');
+    }
+
+    const { error } = await supabase
+      .from('reviews')
+      .upsert(
+        {
+          user_id: user.id,
+          item_id: itemId,
+          rating: rating,
+          comment: comentario,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id, item_id' }
+      );
+
+    setCargando(false);
+
+    if (error) {
+      alert('Error al guardar la reseña: ' + error.message);
+    } else {
+      setEnviado(true);
       setRating(0);
       setComentario('');
-    }, 2500);
+      setTimeout(() => setEnviado(false), 2500);
+    }
   };
 
   return (
@@ -95,18 +178,19 @@ export default function ReputacionPage() {
 
             <button
               type="submit"
+              disabled={cargando}
               style={{
-                background: '#2563EB',
+                background: cargando ? '#94A3B8' : '#2563EB',
                 color: '#FFF',
                 border: 'none',
                 padding: '0.8rem 1.5rem',
                 borderRadius: '8px',
                 fontWeight: 600,
                 fontSize: '1rem',
-                cursor: 'pointer',
+                cursor: cargando ? 'not-allowed' : 'pointer',
               }}
             >
-              Enviar valoracion
+              {cargando ? 'Guardando...' : 'Enviar valoracion'}
             </button>
           </form>
         )}
@@ -116,9 +200,9 @@ export default function ReputacionPage() {
       {resenas.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>Últimas valoraciones recibidas</h3>
-          {resenas.map((r, idx) => (
+          {resenas.map((r) => (
             <div
-              key={idx}
+              key={r.id}
               style={{
                 background: '#FFF',
                 padding: '1rem 1.25rem',
@@ -127,12 +211,14 @@ export default function ReputacionPage() {
               }}
             >
               <div style={{ color: '#F59E0B', fontSize: '1rem', marginBottom: '0.25rem' }}>
-                {'★'.repeat(r.estrellas)}
+                {'★'.repeat(r.rating)}
               </div>
               <p style={{ margin: 0, fontSize: '0.95rem', color: '#334155' }}>
-                {r.texto || 'Sin comentario escrito.'}
+                {r.comment || 'Sin comentario escrito.'}
               </p>
-              <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{r.fecha}</span>
+              <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
+                {new Date(r.created_at).toLocaleDateString()}
+              </span>
             </div>
           ))}
         </div>
