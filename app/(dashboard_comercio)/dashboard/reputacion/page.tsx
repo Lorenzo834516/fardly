@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 
@@ -15,9 +15,9 @@ interface Resena {
   created_at: string;
 }
 
-export default function ReputacionPage() {
+// 1. Componente que utiliza useSearchParams
+function ReputacionContent() {
   const searchParams = useSearchParams();
-  // Obtiene el itemId de la URL (?itemId=...) o usa un valor por defecto
   const itemId = searchParams.get('itemId') || 'TU_ITEM_ID_AQUI';
 
   const [rating, setRating] = useState<number>(0);
@@ -27,7 +27,6 @@ export default function ReputacionPage() {
   const [cargando, setCargando] = useState(false);
   const [resenas, setResenas] = useState<Resena[]>([]);
 
-  // 1. Cargar reseñas y suscribirse a eventos en tiempo real
   useEffect(() => {
     if (!itemId) return;
 
@@ -76,7 +75,6 @@ export default function ReputacionPage() {
     };
   }, [itemId]);
 
-  // 2. Guardar o actualizar reseña
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (rating === 0) return alert('Por favor selecciona una calificación con las estrellas.');
@@ -226,5 +224,14 @@ export default function ReputacionPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// 2. Export por defecto envuelto en Suspense
+export default function ReputacionPage() {
+  return (
+    <Suspense fallback={<div style={{ textAlign: 'center', padding: '2rem' }}>Cargando...</div>}>
+      <ReputacionContent />
+    </Suspense>
   );
 }
