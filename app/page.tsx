@@ -8,7 +8,7 @@ export default function Home() {
   const [showMore, setShowMore] = useState(false);
   const sectionRefs = useRef<HTMLElement[]>([]);
 
-  // Anima cada sección justo cuando entra en pantalla, no todas al cargar
+  // Anima cada sección justo cuando entra en pantalla
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -90,7 +90,6 @@ export default function Home() {
           color: var(--paper);
         }
 
-        /* Que el hero no se rompa en pantallas angostas */
         @media (max-width: 860px) {
           .hero-grid {
             grid-template-columns: 1fr !important;
@@ -121,10 +120,11 @@ export default function Home() {
         </span>
 
         <nav className="main-nav" style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-          <a href="#como-funciona" className="nav-item">Cómo funciona</a>
-          <a href="#precios" className="nav-item">Precios</a>
-          <a href="#casos" className="nav-item">Casos</a>
-
+          {/* Accesos a las nuevas secciones */}
+          {/* Modifica las rutas apuntando hacia /dashboard/... */}
+        <Link href="/dashboard" className="nav-item">Dashboard</Link>
+        <Link href="/dashboard/retencion" className="nav-item">Retención</Link>
+        <Link href="/dashboard/reputacion" className="nav-item">Reputación</Link>
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setShowMore((prev) => !prev)}
@@ -159,6 +159,10 @@ export default function Home() {
                   border: '1px solid var(--line)',
                 }}
               >
+                <a href="#como-funciona" className="dropdown-item" onClick={() => setShowMore(false)}>Cómo funciona</a>
+                <a href="#precios" className="dropdown-item" onClick={() => setShowMore(false)}>Precios</a>
+                <a href="#casos" className="dropdown-item" onClick={() => setShowMore(false)}>Casos</a>
+                <hr style={{ margin: '0.4rem 0', borderColor: 'var(--line)', opacity: 0.3 }} />
                 <Link href="/registro" className="dropdown-item">Crear cuenta gratis</Link>
                 <Link href="/login" className="dropdown-item">Iniciar sesión</Link>
               </div>
@@ -191,7 +195,8 @@ export default function Home() {
         >
           <div className="hero-grid" style={{ maxWidth: 1100, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'center' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <span className="eyebrow">Para negocios de barrio</span>
+              {/* Texto modificado */}
+              <span className="eyebrow">Plataforma de Fidelización Digital</span>
               <h1 style={{ fontSize: '3.2rem', lineHeight: 1.05, margin: 0 }}>
                 Convierte clientes en clientes frecuentes.
               </h1>
@@ -423,11 +428,11 @@ export default function Home() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
               <span style={{ color: 'var(--gold)', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em' }}>
-                PRODUCTO
+                SECCIONES
               </span>
-              <a href="#como-funciona" className="footer-link">Cómo funciona</a>
-              <a href="#precios" className="footer-link">Precios</a>
-              <a href="#casos" className="footer-link">Casos de uso</a>
+              <Link href="/dashboard" className="footer-link">Dashboard</Link>
+              <Link href="/dashboard/retencion" className="footer-link">Retención</Link>
+              <Link href="/dashboard/reputacion" className="footer-link">Reputación</Link>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
