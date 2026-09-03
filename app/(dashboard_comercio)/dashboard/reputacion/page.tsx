@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -14,7 +15,11 @@ interface Resena {
   created_at: string;
 }
 
-export default function ReputacionPage({ itemId = 'TU_ITEM_ID_AQUI' }: { itemId?: string }) {
+export default function ReputacionPage() {
+  const searchParams = useSearchParams();
+  // Obtiene el itemId de la URL (?itemId=...) o usa un valor por defecto
+  const itemId = searchParams.get('itemId') || 'TU_ITEM_ID_AQUI';
+
   const [rating, setRating] = useState<number>(0);
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [comentario, setComentario] = useState('');
@@ -24,7 +29,8 @@ export default function ReputacionPage({ itemId = 'TU_ITEM_ID_AQUI' }: { itemId?
 
   // 1. Cargar reseñas y suscribirse a eventos en tiempo real
   useEffect(() => {
-    // Carga inicial
+    if (!itemId) return;
+
     const cargarResenas = async () => {
       const { data, error } = await supabase
         .from('reviews')
@@ -39,13 +45,12 @@ export default function ReputacionPage({ itemId = 'TU_ITEM_ID_AQUI' }: { itemId?
 
     cargarResenas();
 
-    // Suscripción Realtime a la tabla reviews para el ítem actual
     const channel = supabase
       .channel(`realtime-reviews-${itemId}`)
       .on(
         'postgres_changes',
         {
-          event: '*', // Recibe INSERT, UPDATE, DELETE
+          event: '*',
           schema: 'public',
           table: 'reviews',
           filter: `item_id=eq.${itemId}`,
@@ -66,7 +71,6 @@ export default function ReputacionPage({ itemId = 'TU_ITEM_ID_AQUI' }: { itemId?
       )
       .subscribe();
 
-    // Limpieza de la suscripción al desmontar el componente
     return () => {
       supabase.removeChannel(channel);
     };
@@ -136,7 +140,6 @@ export default function ReputacionPage({ itemId = 'TU_ITEM_ID_AQUI' }: { itemId?
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {/* Selector de Estrellas Interactivo */}
             <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -190,13 +193,12 @@ export default function ReputacionPage({ itemId = 'TU_ITEM_ID_AQUI' }: { itemId?
                 cursor: cargando ? 'not-allowed' : 'pointer',
               }}
             >
-              {cargando ? 'Guardando...' : 'Enviar valoracion'}
+              {cargando ? 'Guardando...' : 'Enviar valoración'}
             </button>
           </form>
         )}
       </div>
 
-      {/* Historial de Reseñas */}
       {resenas.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>Últimas valoraciones recibidas</h3>
