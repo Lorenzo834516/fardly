@@ -1,8 +1,14 @@
 'use client';
 
-import './dashboard.css';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import './dashboard.css';
+
+const TABS = [
+  { href: '/dashboard', label: 'Impacto (ROI)' },
+  { href: '/dashboard/retencion', label: 'Retención de clientes' },
+  { href: '/dashboard/reputacion', label: 'Reputación' },
+];
 
 export default function DashboardLayout({
   children,
@@ -10,12 +16,6 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-
-  const navLinks = [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Retención IA', href: '/dashboard/retencion' },
-    { name: 'Reputación', href: '/dashboard/reputacion' },
-  ];
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#F8FAFC', color: '#0F172A', fontFamily: 'system-ui, -apple-system, sans-serif' }}>

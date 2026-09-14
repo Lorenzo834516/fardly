@@ -11,6 +11,7 @@ type BusinessRow = {
   slug: string;
   logo_url: string | null;
   brand_color: string | null;
+  stamps_goal: number;
   whatsapp_number: string | null;
   instagram_handle: string | null;
   facebook_handle: string | null;
@@ -39,7 +40,7 @@ export default function PerfilNegocio() {
 
       const { data: biz } = await supabase
         .from('businesses')
-        .select('id, name, slug, logo_url, brand_color, whatsapp_number, instagram_handle, facebook_handle, tiktok_handle, twitter_handle, website_url')
+        .select('id, name, slug, logo_url, brand_color, stamps_goal, whatsapp_number, instagram_handle, facebook_handle, tiktok_handle, twitter_handle, website_url')
         .eq('owner_id', user.id)
         .single();
 
@@ -104,6 +105,7 @@ export default function PerfilNegocio() {
       .update({
         logo_url: business.logo_url,
         brand_color: business.brand_color,
+        stamps_goal: business.stamps_goal,
         whatsapp_number: business.whatsapp_number,
         instagram_handle: business.instagram_handle,
         facebook_handle: business.facebook_handle,
@@ -266,6 +268,34 @@ export default function PerfilNegocio() {
                   {business.brand_color ?? '#2b2420'}
                 </span>
               </div>
+            </div>
+          </div>
+
+          {/* Sección: programa de fidelización */}
+          <div
+            style={{
+              background: 'var(--card)',
+              borderRadius: 18,
+              padding: '1.75rem',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+              marginBottom: '1.25rem',
+            }}
+          >
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.05em', color: 'var(--stamp)', marginBottom: '1.1rem' }}>
+              PROGRAMA DE FIDELIZACIÓN
+            </p>
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label htmlFor="stampsGoal">Sellos para ganar el premio</label>
+              <input
+                id="stampsGoal"
+                type="number"
+                min={3}
+                max={20}
+                value={business.stamps_goal}
+                onChange={(e) => update('stamps_goal', Math.max(3, Math.min(20, parseInt(e.target.value) || 3)))}
+                style={{ maxWidth: 120 }}
+              />
+              <span className="field-hint">Tus clientes verán "X / {business.stamps_goal} sellos" en su tarjeta digital.</span>
             </div>
           </div>
 

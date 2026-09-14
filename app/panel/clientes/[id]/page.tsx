@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabaseClient';
 
 type CustomerDetail = {
   id: string;
+  business_id: string;
   full_name: string | null;
   phone: string | null;
   email: string | null;
@@ -47,6 +48,7 @@ export default function FichaCliente() {
   const [card, setCard] = useState<CardDetail | null>(null);
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [couponRedemptions, setCouponRedemptions] = useState<CouponRedemptionRow[]>([]);
+  const [stampsGoal, setStampsGoal] = useState(8);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,11 +61,20 @@ export default function FichaCliente() {
 
       const { data: customerRow } = await supabase
         .from('customers')
-        .select('id, full_name, phone, email, created_at, last_visit_at, visits_count, tags')
+        .select('id, business_id, full_name, phone, email, created_at, last_visit_at, visits_count, tags')
         .eq('id', id)
         .single();
 
       setCustomer(customerRow);
+
+      if (customerRow) {
+        const { data: biz } = await supabase
+          .from('businesses')
+          .select('stamps_goal')
+          .eq('id', customerRow.business_id)
+          .single();
+        setStampsGoal(biz?.stamps_goal ?? 8);
+      }
 
       const { data: cardRow } = await supabase
         .from('loyalty_cards')
@@ -171,7 +182,7 @@ export default function FichaCliente() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
             <div>
-              <p style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0 }}>{stamps}/8</p>
+              <p style={{ fontSize: '1.4rem', fontWeight: 700, margin: 0 }}>{stamps}/{stampsGoal}</p>
               <p style={{ fontSize: '0.75rem', color: 'rgba(255,248,240,0.7)', margin: '0.2rem 0 0' }}>Sellos actuales</p>
             </div>
             <div>

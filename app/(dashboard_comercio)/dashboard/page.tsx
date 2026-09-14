@@ -7,12 +7,20 @@ export default function DashboardPage() {
   const [simulandoEjecucion, setSimulandoEjecucion] = useState(false);
   const [mensajeExito, setMensajeExito] = useState('');
 
-  // Datos dinámicos según el filtro
+  // Objeto con datos mock según el período seleccionado
   const datos = {
-    este_mes: { impacto: '$4,820 USD', roi: '61X', clientes: 47, referidos: '$780', promos: '$2,680' },
-    mes_pasado: { impacto: '$3,910 USD', roi: '49X', clientes: 38, referidos: '$620', promos: '$2,150' },
-    trimestre: { impacto: '$12,450 USD', roi: '55X', clientes: 132, referidos: '$2,100', promos: '$7,300' },
-  }[periodo] || { impacto: '$4,820 USD', roi: '61X', clientes: 47, referidos: '$780', promos: '$2,680' };
+    este_mes: { impacto: 4820, clientes: 47, referidos: 780, promos: 2680, costo: 79 },
+    mes_pasado: { impacto: 3910, clientes: 38, referidos: 620, promos: 2150, costo: 79 },
+    trimestre: { impacto: 12450, clientes: 132, referidos: 2100, promos: 7300, costo: 237 },
+  }[periodo] || { impacto: 4820, clientes: 47, referidos: 780, promos: 2680, costo: 79 };
+
+  const roiEstimado = Math.round(datos.impacto / datos.costo);
+
+  const stats = [
+    { label: 'Clientes recuperados', value: datos.clientes, sub: `+$${datos.promos} en ventas` },
+    { label: 'Ventas por referidos', value: `$${datos.referidos}`, sub: 'Boca a boca digital' },
+    { label: 'Ventas por promociones IA', value: `$${datos.promos}`, sub: 'Next Best Offer' },
+  ];
 
   const ejecutarAutomatizacion = () => {
     setSimulandoEjecucion(true);
@@ -29,7 +37,9 @@ export default function DashboardPage() {
       {/* Encabezado y Filtros */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>Resumen Ejecutivo</h1>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+            Resumen Ejecutivo
+          </h1>
           <p style={{ color: '#64748B', fontSize: '0.9rem', margin: '0.25rem 0 0 0' }}>
             Rendimiento general de tus estrategias de fidelización e IA
           </p>
@@ -71,58 +81,95 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Grid de Métricas Principales */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
-        
-        {/* Tarjeta 1 */}
-        <div style={{ backgroundColor: '#FFFFFF', padding: '1.5rem', borderRadius: '12px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ color: '#64748B', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Impacto Estimado
-          </div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0F172A', margin: '0.5rem 0' }}>
-            {datos.impacto}
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <span style={{ backgroundColor: '#DCFCE7', color: '#15803D', fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-              ROI {datos.roi}
-            </span>
-            <span style={{ color: '#94A3B8', fontSize: '0.8rem' }}>Costo: $79/mes</span>
-          </div>
+      {/* Tarjeta principal de impacto */}
+      <div
+        style={{
+          backgroundColor: '#0F172A',
+          color: '#FFFFFF',
+          borderRadius: 16,
+          padding: '2rem',
+          display: 'flex',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1.25rem',
+        }}
+      >
+        <div>
+          <p style={{ color: '#94A3B8', fontSize: '0.78rem', letterSpacing: '0.04em', fontWeight: 700, margin: 0 }}>
+            IMPACTO ESTIMADO ({periodo.toUpperCase().replace('_', ' ')})
+          </p>
+          <p style={{ fontSize: '2.5rem', fontWeight: 800, margin: '0.3rem 0 0', lineHeight: 1 }}>
+            ${datos.impacto.toLocaleString()} <span style={{ fontSize: '1.1rem', fontWeight: 500, opacity: 0.6 }}>USD</span>
+          </p>
+          <p style={{ color: '#94A3B8', fontSize: '0.82rem', margin: '0.4rem 0 0' }}>
+            Generado a través de automatizaciones e IA
+          </p>
         </div>
-
-        {/* Tarjeta 2 */}
-        <div style={{ backgroundColor: '#FFFFFF', padding: '1.5rem', borderRadius: '12px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ color: '#64748B', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Clientes Recuperados
-          </div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#2563EB', margin: '0.5rem 0' }}>
-            {datos.clientes}
-          </div>
-          <div style={{ color: '#16A34A', fontSize: '0.85rem', fontWeight: 600 }}>
-            +${datos.promos} generados en ventas
-          </div>
+        <div style={{ textAlign: 'right' }}>
+          <span
+            style={{
+              display: 'inline-block',
+              backgroundColor: '#EAB308',
+              color: '#0F172A',
+              fontWeight: 800,
+              fontSize: '0.95rem',
+              padding: '0.4rem 1rem',
+              borderRadius: 999,
+            }}
+          >
+            ROI {roiEstimado}X
+          </span>
+          <p style={{ fontSize: '0.78rem', color: '#94A3B8', margin: '0.5rem 0 0' }}>
+            Costo estimado: ${datos.costo}/período
+          </p>
         </div>
+      </div>
 
-        {/* Tarjeta 3 */}
-        <div style={{ backgroundColor: '#FFFFFF', padding: '1.5rem', borderRadius: '12px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ color: '#64748B', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Ventas por Referidos
+      {/* Tarjetas secundarias de métricas */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '1.25rem',
+        }}
+      >
+        {stats.map((s) => (
+          <div
+            key={s.label}
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: 12,
+              padding: '1.25rem',
+              border: '1px solid #E2E8F0',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            }}
+          >
+            <p style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 600, margin: 0 }}>{s.label}</p>
+            <p style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0.35rem 0 0', color: '#0F172A' }}>{s.value}</p>
+            <p style={{ fontSize: '0.78rem', color: '#16A34A', fontWeight: 600, margin: '0.35rem 0 0' }}>{s.sub}</p>
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#0F172A', margin: '0.5rem 0' }}>
-            {datos.referidos}
-          </div>
-          <div style={{ color: '#64748B', fontSize: '0.8rem' }}>
-            Boca a boca digital activado
-          </div>
-        </div>
-
+        ))}
       </div>
 
       {/* Sección Inferior: Acciones Rápidas e IA */}
-      <div style={{ backgroundColor: '#0F172A', color: '#FFFFFF', padding: '1.75rem', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
+      <div
+        style={{
+          backgroundColor: '#FFFFFF',
+          border: '1px solid #E2E8F0',
+          padding: '1.75rem',
+          borderRadius: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1.5rem',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+        }}
+      >
         <div>
-          <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>Automatizaciones de Inteligencia Artificial</h3>
-          <p style={{ margin: '0.35rem 0 0 0', color: '#94A3B8', fontSize: '0.9rem' }}>
+          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#0F172A' }}>
+            Automatizaciones de Inteligencia Artificial
+          </h3>
+          <p style={{ margin: '0.35rem 0 0 0', color: '#64748B', fontSize: '0.875rem' }}>
             Detecta clientes inactivos y envía promociones personalizadas automáticamente.
           </p>
         </div>
@@ -141,7 +188,7 @@ export default function DashboardPage() {
             transition: 'all 0.2s',
           }}
         >
-          {simulandoEjecucion ? 'Ejecutando IA...' : '⚡ Lanza Automática de Reactivación'}
+          {simulandoEjecucion ? 'Ejecutando IA...' : '⚡ Lanzar Automática de Reactivación'}
         </button>
       </div>
 

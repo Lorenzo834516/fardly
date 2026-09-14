@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { verifySessionToken, CUSTOMER_COOKIE } from '@/lib/customerSession';
 import { createSaveToWalletLink } from '@/lib/googleWallet';
 
-const META_SELLOS = 10;
+const META_SELLOS_DEFAULT = 8; // respaldo si el negocio no tiene meta configurada
 
 export async function GET(
   req: NextRequest,
@@ -17,7 +17,7 @@ export async function GET(
 
   const { data: business } = await supabaseAdmin
     .from('businesses')
-    .select('id, name, logo_url, brand_color')
+    .select('id, name, logo_url, brand_color, stamps_goal')
     .eq('slug', params.slug)
     .single();
 
@@ -50,7 +50,7 @@ export async function GET(
         customerId: session.customerId,
         customerName: customer?.full_name ?? 'Cliente',
         stamps: card?.stamps_balance ?? 0,
-        metaStamps: META_SELLOS,
+        metaStamps: business.stamps_goal ?? META_SELLOS_DEFAULT,
       }
     );
 

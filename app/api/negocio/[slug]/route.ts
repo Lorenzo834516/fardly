@@ -7,7 +7,7 @@ export async function GET(
 ) {
   const { data: business, error } = await supabaseAdmin
     .from('businesses')
-    .select('id, name, logo_url, brand_color, whatsapp_number, instagram_handle, facebook_handle, tiktok_handle, twitter_handle, website_url')
+    .select('id, name, logo_url, brand_color, stamps_goal, whatsapp_number, instagram_handle, facebook_handle, tiktok_handle, twitter_handle, website_url')
     .eq('slug', params.slug)
     .eq('status', 'active')
     .single();
@@ -55,6 +55,7 @@ export async function GET(
     name: business.name,
     logoUrl: business.logo_url,
     brandColor: business.brand_color,
+    stampsGoal: business.stamps_goal,
     whatsapp: business.whatsapp_number,
     instagram: business.instagram_handle,
     facebook: business.facebook_handle,

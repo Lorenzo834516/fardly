@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 
-const META_SELLOS = 8;
+const META_SELLOS_DEFAULT = 8; // respaldo mientras carga el negocio
 
 type Product = {
   id: string;
@@ -32,6 +32,7 @@ type BusinessInfo = {
   name: string;
   logoUrl: string | null;
   brandColor: string | null;
+  stampsGoal: number;
   whatsapp: string | null;
   instagram: string | null;
   facebook: string | null;
@@ -71,8 +72,12 @@ export default function TarjetaCliente() {
   const [redeemedCoupons, setRedeemedCoupons] = useState<Set<string>>(new Set());
   const [redeemingCoupon, setRedeemingCoupon] = useState<string | null>(null);
   const [couponMessage, setCouponMessage] = useState<Record<string, string>>({});
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewStatus, setReviewStatus] = useState<'idle' | 'loading' | 'sent'>('idle');
 
   const brand = business?.brandColor || '#2b2420';
+  const metaSellos = business?.stampsGoal ?? META_SELLOS_DEFAULT;
 
   async function handleAddToWallet() {
     setWalletLoading(true);
@@ -111,6 +116,19 @@ export default function TarjetaCliente() {
     if (c.type === 'percentage') return `${c.value}% de descuento`;
     if (c.type === 'fixed') return `$${c.value} de descuento`;
     return 'Producto gratis';
+  }
+
+  async function handleSubmitReview() {
+    if (reviewRating === 0) return;
+    setReviewStatus('loading');
+
+    const res = await fetch(`/api/negocio/${slug}/resena`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rating: reviewRating, comment: reviewComment }),
+    });
+
+    setReviewStatus(res.ok ? 'sent' : 'idle');
   }
 
   async function loadAll() {
@@ -384,7 +402,7 @@ export default function TarjetaCliente() {
               <p style={{ color: 'var(--slate)', marginBottom: '0.5rem' }}>Hola, {card.name}</p>
 
               <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 8, margin: '1rem 0' }}>
-                {Array.from({ length: META_SELLOS }).map((_, i) => {
+                {Array.from({ length: metaSellos }).map((_, i) => {
                   const filled = i < card.stamps;
                   const isNewest = filled && i === card.stamps - 1;
                   return (
@@ -411,7 +429,7 @@ export default function TarjetaCliente() {
                 })}
               </div>
 
-              <p style={{ fontWeight: 600 }}>{card.stamps} / {META_SELLOS} sellos</p>
+              <p style={{ fontWeight: 600 }}>{card.stamps} / {metaSellos} sellos</p>
               {card.totalRedeemed > 0 && (
                 <p style={{ color: 'var(--slate)', fontSize: '0.85rem' }}>Premios canjeados: {card.totalRedeemed}</p>
               )}
@@ -622,6 +640,116 @@ export default function TarjetaCliente() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Danos tu opinión */}
+        {card?.registered && (
+          <div className="fade-in-section" style={{ marginTop: '1.5rem' }}>
+            <div
+              style={{
+                background: 'var(--card)',
+                borderRadius: 16,
+                padding: '1.5rem',
+              }}
+            >
+              {reviewStatus === 'sent' ? (
+                reviewRating >= 4 ? (
+                  <div>
+                    <p style={{ fontWeight: 700, color: 'var(--ink)', margin: 0 }}>¡Nos alegra mucho! 🎉</p>
+                    <p style={{ fontSize: '0.88rem', color: 'var(--slate)', margin: '0.5rem 0 1rem' }}>
+                      ¿Nos apoyarías dejando tu opinión pública?
+                    </p>
+                    <a
+                      href="https://maps.google.com"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="cta-pill"
+                      style={{
+                        display: 'inline-flex',
+                        background: brand,
+                        color: '#fff',
+                        fontWeight: 700,
+                        fontSize: '0.88rem',
+                        padding: '0.65rem 1.3rem',
+                        borderRadius: 999,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      Dejar reseña en Google
+                    </a>
+                  </div>
+                ) : (
+                  <div>
+                    <p style={{ fontWeight: 700, color: 'var(--ink)', margin: 0 }}>Gracias por tu retroalimentación</p>
+                    <p style={{ fontSize: '0.88rem', color: 'var(--slate)', margin: '0.5rem 0 0' }}>
+                      La recibimos internamente para mejorar.
+                    </p>
+                  </div>
+                )
+              ) : (
+                <>
+                  <p style={{ fontWeight: 600, margin: '0 0 0.9rem', color: 'var(--ink)' }}>¿Cómo estuvo tu experiencia hoy?</p>
+                  <div style={{ display: 'flex', gap: '0.3rem', marginBottom: '1rem' }}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setReviewRating(star)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          fontSize: '1.8rem',
+                          cursor: 'pointer',
+                          padding: 0,
+                          color: reviewRating >= star ? 'var(--gold)' : 'var(--line)',
+                        }}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    rows={2}
+                    placeholder="Cuéntanos qué te gustó o qué podemos mejorar (opcional)"
+                    style={{
+                      width: '100%',
+                      border: '1px solid var(--line)',
+                      borderRadius: 10,
+                      padding: '0.6rem',
+                      fontFamily: 'inherit',
+                      fontSize: '0.88rem',
+                      color: 'var(--ink)',
+                      background: 'var(--paper)',
+                      resize: 'vertical',
+                      marginBottom: '0.9rem',
+                    }}
+                  />
+                  <button
+                    onClick={handleSubmitReview}
+                    disabled={reviewRating === 0 || reviewStatus === 'loading'}
+                    className="cta-pill"
+                    style={{
+                      width: '100%',
+                      justifyContent: 'center',
+                      background: brand,
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 999,
+                      padding: '0.7rem',
+                      fontWeight: 700,
+                      fontSize: '0.9rem',
+                      cursor: reviewRating === 0 ? 'default' : 'pointer',
+                      opacity: reviewRating === 0 ? 0.6 : 1,
+                    }}
+                  >
+                    {reviewStatus === 'loading' ? 'Enviando...' : 'Enviar valoración'}
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         )}
 

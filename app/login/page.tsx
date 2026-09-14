@@ -1,5 +1,5 @@
 'use client';
-
+import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
@@ -39,37 +39,8 @@ export default function Login() {
         justifyContent: 'center',
         background: 'var(--paper)',
         padding: '2rem',
-        position: 'relative',
       }}
     >
-      {/* Botón para volver al inicio */}
-      <button
-        type="button"
-        onClick={() => router.push('/')}
-        aria-label="Volver al inicio"
-        style={{
-          position: 'absolute',
-          top: '1.5rem',
-          left: '1.5rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          background: 'none',
-          border: 'none',
-          color: 'var(--ink)',
-          fontSize: '0.9rem',
-          fontWeight: 600,
-          cursor: 'pointer',
-          padding: '0.5rem',
-        }}
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <line x1="19" y1="12" x2="5" y2="12" />
-          <polyline points="12 19 5 12 12 5" />
-        </svg>
-        Inicio
-      </button>
-
       <style>{`
         .cta-pill {
           transition: transform 0.18s ease, box-shadow 0.18s ease;
@@ -87,6 +58,13 @@ export default function Login() {
         }
       `}</style>
       <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: 380 }}>
+        <Link
+          href="/"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: 'var(--slate)', fontSize: '0.88rem', textDecoration: 'none', marginBottom: '1.5rem' }}
+        >
+          ← Volver al inicio
+        </Link>
+
         <span className="eyebrow">Panel del negocio</span>
         <h1 style={{ fontSize: '1.8rem', margin: '0.5rem 0 1.5rem' }}>Inicia sesión</h1>
 
@@ -145,6 +123,15 @@ export default function Login() {
               )}
             </button>
           </div>
+        </div>
+
+        <div style={{ textAlign: 'right', marginTop: '0.5rem', marginBottom: '1rem' }}>
+          <Link
+            href="/forgot-password"
+            style={{ color: 'var(--slate)', fontSize: '0.85rem', textDecoration: 'none' }}
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
         </div>
 
         {status === 'error' && (

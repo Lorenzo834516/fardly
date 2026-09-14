@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 
 function slugify(text: string) {
@@ -12,13 +13,14 @@ function slugify(text: string) {
     .replace(/(^-|-$)/g, '');
 }
 
-const TIPOS_NEGOCIO = ['Restaurante', 'Cafetería', 'Barbería / Salón', 'Tienda', 'Discoteca', 'Clínica', 'Gimnasio', 'otros',];
+const TIPOS_NEGOCIO = ['Restaurante', 'Cafetería', 'Barbería / Salón', 'Tienda', 'Discoteca', 'Clínica', 'Gimnasio', 'otros'];
 
 export default function Registro() {
   const router = useRouter();
   const [form, setForm] = useState({
     businessName: '',
     businessType: TIPOS_NEGOCIO[0],
+    customBusinessType: '',
     whatsapp: '',
     email: '',
     password: '',
@@ -35,6 +37,16 @@ export default function Registro() {
     e.preventDefault();
     setStatus('loading');
     setErrorMsg('');
+
+    // Determinar el tipo de negocio a guardar en la base de datos
+    const finalBusinessType =
+      form.businessType === 'otros' ? form.customBusinessType.trim() : form.businessType;
+
+    if (form.businessType === 'otros' && !finalBusinessType) {
+      setStatus('error');
+      setErrorMsg('Por favor especifica el tipo de tu negocio.');
+      return;
+    }
 
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: form.email,
@@ -68,7 +80,7 @@ export default function Registro() {
       owner_id: authData.user.id,
       name: form.businessName,
       slug,
-      business_type: form.businessType,
+      business_type: finalBusinessType,
       whatsapp_number: form.whatsapp,
     });
 
@@ -100,6 +112,15 @@ export default function Registro() {
         .cta-pill:disabled {
           opacity: 0.7;
           cursor: default;
+        }
+        .login-link {
+          color: var(--ink);
+          font-weight: 600;
+          text-decoration: underline;
+          text-underline-offset: 3px;
+        }
+        .login-link:hover {
+          opacity: 0.8;
         }
       `}</style>
       <section
@@ -169,6 +190,20 @@ export default function Registro() {
               ))}
             </select>
           </div>
+
+          {/* Campo condicional que solo aparece si eligen "otros" */}
+          {form.businessType === 'otros' && (
+            <div className="field">
+              <label htmlFor="customBusinessType">Especifica tu tipo de negocio</label>
+              <input
+                id="customBusinessType"
+                required
+                value={form.customBusinessType}
+                onChange={(e) => update('customBusinessType', e.target.value)}
+                placeholder="Ej. Repostería, Consultoría, etc."
+              />
+            </div>
+          )}
 
           <div className="field">
             <label htmlFor="whatsapp">WhatsApp del negocio</label>
@@ -263,6 +298,13 @@ export default function Registro() {
           >
             {status === 'loading' ? 'Creando tu panel...' : 'Crear mi cuenta'}
           </button>
+
+          <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem', color: 'var(--slate)' }}>
+            ¿Ya tienes una cuenta?{' '}
+            <Link href="/login" className="login-link">
+              Inicia sesión
+            </Link>
+          </p>
         </form>
       </section>
     </main>

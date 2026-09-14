@@ -19,6 +19,7 @@ type CustomerRow = {
 export default function PanelClientes() {
   const router = useRouter();
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
+  const [stampsGoal, setStampsGoal] = useState(8);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
@@ -61,7 +62,7 @@ export default function PanelClientes() {
 
       const { data: biz } = await supabase
         .from('businesses')
-        .select('id')
+        .select('id, stamps_goal')
         .eq('owner_id', user.id)
         .single();
 
@@ -77,6 +78,7 @@ export default function PanelClientes() {
         .order('last_visit_at', { ascending: false, nullsFirst: false });
 
       setCustomers((rows as CustomerRow[]) ?? []);
+      setStampsGoal(biz.stamps_goal ?? 8);
       setLoading(false);
     }
     load();
@@ -244,7 +246,7 @@ export default function PanelClientes() {
                       borderRadius: 999,
                     }}
                   >
-                    {stamps} / 8
+                    {stamps} / {stampsGoal}
                   </span>
                   <p style={{ color: 'var(--slate)', fontSize: '0.78rem', margin: '0.35rem 0 0' }}>
                     {c.last_visit_at
