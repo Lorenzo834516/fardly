@@ -1,0 +1,17 @@
+{
+  "Panel": {
+    "title": "Panel",
+    "logout": "Log out",
+    "dashboard": "Dashboard",
+    "profile": "Profile, brand & socials",
+    "menu": "Menu",
+    "clients": "Clients",
+    "coupons": "Coupons",
+    "inactiveClients": "Inactive clients",
+    "subscription": "Subscription",
+    "reputation": "Reputation",
+    "qrTitle": "Your loyalty code",
+    "qrSubtitle": "Clients scan this to earn stamps",
+    "downloadQr": "Download QR"
+  }
+}

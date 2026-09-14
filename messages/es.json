@@ -1,0 +1,17 @@
+{
+  "Panel": {
+    "title": "Panel",
+    "logout": "Cerrar sesión",
+    "dashboard": "Dashboard",
+    "profile": "Perfil, marca y redes",
+    "menu": "Menú",
+    "clients": "Clientes",
+    "coupons": "Cupones",
+    "inactiveClients": "Clientes inactivos",
+    "subscription": "Suscripción",
+    "reputation": "Reputación",
+    "qrTitle": "Tu código de fidelización",
+    "qrSubtitle": "Los clientes escanean esto para sumar sellos",
+    "downloadQr": "Descargar QR"
+  }
+}
