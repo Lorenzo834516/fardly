@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import './dashboard.css';
 
 const TABS = [
   { href: '/dashboard', label: 'Impacto (ROI)' },
@@ -52,7 +51,7 @@ export default function DashboardLayout({
             </Link>
 
             <nav style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {navLinks.map((link) => {
+              {TABS.map((link) => {
                 const isActive = pathname === link.href;
                 return (
                   <Link
@@ -70,7 +69,7 @@ export default function DashboardLayout({
                       transition: 'all 0.2s ease',
                     }}
                   >
-                    {link.name}
+                    {link.label}
                   </Link>
                 );
               })}
