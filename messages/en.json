@@ -1,5 +1,7 @@
 {
   "Panel": {
+    "loading": "Loading...",
+    "noBusiness": "We couldn't find a business associated with your account.",
     "title": "Panel",
     "logout": "Log out",
     "dashboard": "Dashboard",

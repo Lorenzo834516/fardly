@@ -1,5 +1,7 @@
 {
   "Panel": {
+    "loading": "Cargando...",
+    "noBusiness": "No encontramos un negocio asociado a tu cuenta.",
     "title": "Panel",
     "logout": "Cerrar sesión",
     "dashboard": "Dashboard",

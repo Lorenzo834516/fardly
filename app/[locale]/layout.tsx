@@ -1,13 +1,23 @@
 import './globals.css';
+import { NextIntlClientProvider } from 'next-intl';
 
 export const metadata = {
   title: 'FARDLY',
   description: 'Convierte clientes en clientes frecuentes.',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function LocaleLayout({
+  children,
+  params: { locale },
+}: {
+  children: React.ReactNode;
+  params: { locale: string };
+}) {
+  // Cargamos el archivo JSON directamente según el idioma de la URL
+  const messages = (await import(`../../messages/${locale}.json`)).default;
+
   return (
-    <html lang="es">
+    <html lang={locale}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -15,7 +25,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          {children}
+        </NextIntlClientProvider>
+      </body>
     </html>
   );
 }

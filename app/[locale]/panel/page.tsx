@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { QRCodeSVG } from 'qrcode.react';
+import { useTranslations } from 'next-intl'; // <-- 1. Importamos el traductor
+import LanguageSwitcher from '../components/LanguageSwitcher'; // <-- 2. Importación de tus botones
 
 function downloadQR(slug: string) {
   const svg = document.getElementById('business-qr');
@@ -28,94 +30,96 @@ function downloadQR(slug: string) {
   img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
 }
 
-const NAV_ITEMS = [
-  {
-    href: '/panel/dashboard',
-    label: 'Dashboard',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="3" y="3" width="7" height="9" rx="1" />
-        <rect x="14" y="3" width="7" height="5" rx="1" />
-        <rect x="14" y="12" width="7" height="9" rx="1" />
-        <rect x="3" y="16" width="7" height="5" rx="1" />
-      </svg>
-    ),
-  },
-  {
-    href: '/panel/perfil',
-    label: 'Perfil, marca y redes',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" />
-      </svg>
-    ),
-  },
-  {
-    href: '/panel/menu',
-    label: 'Menú',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M4 6h16M4 12h16M4 18h10" />
-      </svg>
-    ),
-  },
-  {
-    href: '/panel/clientes',
-    label: 'Clientes',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
-    ),
-  },
-  {
-    href: '/panel/cupones',
-    label: 'Cupones',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M21 12a2 2 0 0 0-2-2V8a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v2a2 2 0 0 1 0 4v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2a2 2 0 0 1 0-4z" />
-        <path d="M9 6v12" strokeDasharray="2 2" />
-      </svg>
-    ),
-  },
-  {
-    href: '/panel/campanas',
-    label: 'Clientes inactivos',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 6v6l4 2" />
-      </svg>
-    ),
-  },
-  {
-    href: '/panel/suscripcion',
-    label: 'Suscripción',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="2" y="5" width="20" height="14" rx="2" />
-        <line x1="2" y1="10" x2="22" y2="10" />
-      </svg>
-    ),
-  },
-  {
-    href: '/panel/resenas',
-    label: 'Reputación',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-      </svg>
-    ),
-  },
-];
-
 export default function Panel() {
   const router = useRouter();
+  const t = useTranslations('Panel'); // <-- 3. Inicializamos el traductor apuntando a "Panel"
   const [business, setBusiness] = useState<{ name: string; slug: string } | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // 4. Movimos NAV_ITEMS aquí adentro para que lea las traducciones
+  const NAV_ITEMS = [
+    {
+      href: '/panel/dashboard',
+      label: t('dashboard'), // <-- Traducido
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="3" y="3" width="7" height="9" rx="1" />
+          <rect x="14" y="3" width="7" height="5" rx="1" />
+          <rect x="14" y="12" width="7" height="9" rx="1" />
+          <rect x="3" y="16" width="7" height="5" rx="1" />
+        </svg>
+      ),
+    },
+    {
+      href: '/panel/perfil',
+      label: t('profile'), // <-- Traducido
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" />
+        </svg>
+      ),
+    },
+    {
+      href: '/panel/menu',
+      label: t('menu'), // <-- Traducido
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M4 6h16M4 12h16M4 18h10" />
+        </svg>
+      ),
+    },
+    {
+      href: '/panel/clientes',
+      label: t('clients'), // <-- Traducido
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      ),
+    },
+    {
+      href: '/panel/cupones',
+      label: t('coupons'), // <-- Traducido
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21 12a2 2 0 0 0-2-2V8a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v2a2 2 0 0 1 0 4v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2a2 2 0 0 1 0-4z" />
+          <path d="M9 6v12" strokeDasharray="2 2" />
+        </svg>
+      ),
+    },
+    {
+      href: '/panel/campanas',
+      label: t('inactiveClients'), // <-- Traducido
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 6v6l4 2" />
+        </svg>
+      ),
+    },
+    {
+      href: '/panel/suscripcion',
+      label: t('subscription'), // <-- Traducido
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="2" y="5" width="20" height="14" rx="2" />
+          <line x1="2" y1="10" x2="22" y2="10" />
+        </svg>
+      ),
+    },
+    {
+      href: '/panel/resenas',
+      label: t('reputation'), // <-- Traducido
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        </svg>
+      ),
+    },
+  ];
 
   useEffect(() => {
     async function load() {
@@ -145,7 +149,7 @@ export default function Panel() {
   if (loading) {
     return (
       <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: 'var(--slate)' }}>Cargando...</p>
+        <p style={{ color: 'var(--slate)' }}>{t('loading')}</p> {/* <-- Traducido */}
       </main>
     );
   }
@@ -153,7 +157,7 @@ export default function Panel() {
   if (!business) {
     return (
       <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p>No encontramos un negocio asociado a tu cuenta.</p>
+        <p>{t('noBusiness')}</p> {/* <-- Traducido */}
       </main>
     );
   }
@@ -176,26 +180,31 @@ export default function Panel() {
         }
       `}</style>
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
+        
         {/* Encabezado */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem' }}>
           <div>
-            <span className="eyebrow">Panel</span>
+            <span className="eyebrow">{t('title')}</span> {/* <-- Traducido */}
             <h1 style={{ fontSize: '2rem', margin: '0.3rem 0 0' }}>{business.name}</h1>
           </div>
-          <button
-            onClick={handleLogout}
-            style={{
-              background: 'transparent',
-              border: '1px solid var(--line)',
-              borderRadius: 999,
-              padding: '0.5rem 1.1rem',
-              color: 'var(--slate)',
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-            }}
-          >
-            Cerrar sesión
-          </button>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <LanguageSwitcher />
+            <button
+              onClick={handleLogout}
+              style={{
+                background: 'transparent',
+                border: '1px solid var(--line)',
+                borderRadius: 999,
+                padding: '0.5rem 1.1rem',
+                color: 'var(--slate)',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+              }}
+            >
+              {t('logout')} {/* <-- Traducido */}
+            </button>
+          </div>
         </div>
 
         {/* Navegación: tarjetas con ícono, no solo texto */}
@@ -247,8 +256,8 @@ export default function Panel() {
 
         {/* QR del negocio — pieza central de la página */}
         <div style={{ background: 'var(--ink)', color: 'var(--paper)', padding: '2.5rem 2rem', borderRadius: 20, textAlign: 'center' }}>
-          <span className="eyebrow" style={{ color: 'var(--gold)' }}>Tu código de fidelización</span>
-          <p style={{ fontWeight: 600, margin: '0.5rem 0 1.5rem', fontSize: '1.1rem' }}>Los clientes escanean esto para sumar sellos</p>
+          <span className="eyebrow" style={{ color: 'var(--gold)' }}>{t('qrTitle')}</span> {/* <-- Traducido */}
+          <p style={{ fontWeight: 600, margin: '0.5rem 0 1.5rem', fontSize: '1.1rem' }}>{t('qrSubtitle')}</p> {/* <-- Traducido */}
 
           {qrUrl && (
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
@@ -273,7 +282,7 @@ export default function Panel() {
               cursor: 'pointer',
             }}
           >
-            Descargar QR
+            {t('downloadQr')} {/* <-- Traducido */}
           </button>
         </div>
       </div>
